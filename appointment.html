@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Book an Appointment</h1>
+        <nav>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="logout.html">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="doctorSelection">
+            <h2>Select a Doctor</h2>
+            <div id="doctorList">
+           
+            </div>
+        </section>
+
+        <section id="appointmentDetails" style="display: none;">
+            <h2>Appointment Details</h2>
+            <form id="appointmentForm">
+                <label for="doctorId">Doctor:</label>
+                <input type="hidden" id="doctorId" name="doctorId">
+                <input type="text" id="doctorName" disabled>
+
+                <label for="appointmentDate">Select Date:</label>
+                <input type="date" id="appointmentDate" name="appointmentDate" required>
+
+                <label for="appointmentTime">Select Time:</label>
+                <input type="time" id="appointmentTime" name="appointmentTime" required>
+
+                <button type="submit">Book Appointment</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 TeleMed. All Rights Reserved.</p>
+    </footer>
+
+    <script src="js/scripts.js"></script>
+    <script>
+        
+        async function loadDoctors() {
+            const response = await fetch('/api/doctors');
+            const doctors = await response.json();
+
+            const doctorList = document.getElementById('doctorList');
+            doctors.forEach(doctor => {
+                const doctorItem = document.createElement('div');
+                doctorItem.className = 'doctor-item';
+                doctorItem.innerHTML = `
+                    <h3>${doctor.name}</h3>
+                    <p>Specialization: ${doctor.specialization}</p>
+                    <button onclick="selectDoctor(${doctor.id}, '${doctor.name}')">Select</button>
+                `;
+                doctorList.appendChild(doctorItem);
+            });
+        }
+
+        
+        function selectDoctor(doctorId, doctorName) {
+            document.getElementById('doctorId').value = doctorId;
+            document.getElementById('doctorName').value = doctorName;
+            document.getElementById('doctorName').placeholder = doctorName; 
+            document.getElementById('appointmentDetails').style.display = 'block';
+        }
+
+        
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const doctorId = this.doctorId.value;
+            const appointmentDate = this.appointmentDate.value;
+            const appointmentTime = this.appointmentTime.value;
+            const appointmentDateTime = `${appointmentDate}T${appointmentTime}`;
+
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ doctorId, appointmentDate: appointmentDateTime }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('Appointment booked successfully!');
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        });
+        window.onload = loadDoctors;
+    </script>
+</body>
+</html>
